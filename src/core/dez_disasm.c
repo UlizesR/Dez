@@ -35,6 +35,14 @@ const char *dez_get_instruction_mnemonic(uint8_t opcode) {
     return "INC";
   case DEZ_INST_DEC:
     return "DEC";
+  case DEZ_INST_LOAD_INDIRECT:
+    return "LOAD_INDIRECT";
+  case DEZ_INST_STORE_INDIRECT:
+    return "STORE_INDIRECT";
+  case DEZ_INST_LOAD_INDEXED:
+    return "LOAD_INDEXED";
+  case DEZ_INST_STORE_INDEXED:
+    return "STORE_INDEXED";
   case DEZ_INST_HALT:
     return "HALT";
   case DEZ_INST_NOP:
@@ -160,6 +168,22 @@ void dez_disasm_instruction(uint32_t instruction, char *output, size_t output_si
 
   case DEZ_INST_DEC: // DECREMENT
     safe_snprintf(output, output_size, "%s %s", mnemonic, dez_get_register_name(reg1));
+    break;
+
+  case DEZ_INST_LOAD_INDIRECT: // LOAD_INDIRECT
+    safe_snprintf(output, output_size, "%s %s, [%s]", mnemonic, dez_get_register_name(reg1), dez_get_register_name(reg2));
+    break;
+
+  case DEZ_INST_STORE_INDIRECT: // STORE_INDIRECT
+    safe_snprintf(output, output_size, "%s %s, [%s]", mnemonic, dez_get_register_name(reg1), dez_get_register_name(reg2));
+    break;
+
+  case DEZ_INST_LOAD_INDEXED: // LOAD_INDEXED
+    safe_snprintf(output, output_size, "%s %s, [%s + %s]", mnemonic, dez_get_register_name(reg1), dez_get_register_name(reg2), dez_get_register_name(reg3));
+    break;
+
+  case DEZ_INST_STORE_INDEXED: // STORE_INDEXED
+    safe_snprintf(output, output_size, "%s %s, [%s + %s]", mnemonic, dez_get_register_name(reg1), dez_get_register_name(reg2), dez_get_register_name(reg3));
     break;
 
   case DEZ_INST_NOP: // NO OPERATION

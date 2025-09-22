@@ -141,6 +141,7 @@ int main() {
   result += test_assembly_file("test_bitwise.s", "Bitwise operations");
   result += test_assembly_file("test_stack.s", "Stack operations");
   result += test_assembly_file("test_functions.s", "Function calls");
+  result += test_assembly_file("test_arrays.s", "Array operations (static & dynamic)");
   result += test_assembly_file("test_comprehensive.s", "Comprehensive features test");
 
   printf("\n=== Test Results ===\n");

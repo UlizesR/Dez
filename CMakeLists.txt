@@ -21,7 +21,7 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Automatically find all source files
 file(GLOB_RECURSE CORE_SOURCES "src/core/*.c")
 file(GLOB_RECURSE TEST_SOURCES "tests/*.c")
-file(GLOB_RECURSE TOOL_SOURCES "tools/*.c")
+file(GLOB_RECURSE TOOL_SOURCES "src/tools/*.c")
 file(GLOB_RECURSE ASSEMBLER_SOURCES "src/assembler/*.c")
 
 # VM Core Library

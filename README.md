@@ -6,6 +6,9 @@ DEZ VM is a lightweight 32-bit virtual machine designed for educational purposes
 
 - **32-bit RISC-like instruction set** with 16 general-purpose registers
 - **Complete assembler toolchain** with lexer, parser, and symbol table
+- **Professional-grade disassembler** with multiple output formats (objdump, hexdump, detailed)
+- **Column headers and line numbers** for clear disassembly output
+- **Symbol table integration** with address-to-symbol mapping
 - **Label and comment support** for readable assembly code
 - **Advanced instruction encoding** supporting both register-to-register and register-to-immediate operations
 - **System calls** for I/O operations including string printing
@@ -230,11 +233,99 @@ Compiles assembly source files to binary format:
 ./bin/asm ../examples/hello.s hello.bin
 ```
 
-### Disassembler (`disasm_tool`)
-Disassembles binary files back to assembly:
+### Enhanced Disassembler (`disasm_tool`)
+Professional-grade disassembler with multiple output formats, column headers, and symbol table support:
+
+#### Basic Usage
 ```bash
 # From the build directory
 ./bin/disasm_tool hello.bin
+```
+
+#### Output Formats
+```bash
+# objdump-like format with proper columns
+./bin/disasm_tool -f objdump hello.bin
+
+# hexdump-like format with ASCII representation
+./bin/disasm_tool -f hexdump hello.bin
+
+# Detailed format with instruction breakdown
+./bin/disasm_tool -f detailed hello.bin
+
+# Simple format (default)
+./bin/disasm_tool -f simple hello.bin
+```
+
+#### Column Headers and Line Numbers
+```bash
+# Show column headers explaining each column
+./bin/disasm_tool -f objdump -H hello.bin
+
+# Show line numbers for better readability
+./bin/disasm_tool -f hexdump -l hello.bin
+
+# Combine both features
+./bin/disasm_tool -f objdump -H -l hello.bin
+```
+
+#### Symbol Table Integration
+```bash
+# Show symbol information in disassembly
+./bin/disasm_tool -f objdump -S hello.bin
+
+# Display complete symbol table
+./bin/disasm_tool -S
+
+# Load symbol table from file
+./bin/disasm_tool --symbol-file symbols.txt hello.bin
+```
+
+#### Advanced Options
+```bash
+# Disassemble specific address range
+./bin/disasm_tool -s 0x100 -c 50 hello.bin
+
+# Disassemble individual instructions
+./bin/disasm_tool -f objdump 0x0000001d 0x10000400
+
+# Show help for all options
+./bin/disasm_tool --help
+```
+
+#### Example Output
+**objdump format with headers and symbols:**
+```
+Address    Instruction  Disassembly
+----------------------------------------------------
+0x00000000: 0000001d  HALT <main>
+0x00000004: 10000400  MOV R0, #1024
+0x00000008: 1010000a  MOV R1, #10
+0x0000000C: 10200000  MOV R2, #0
+0x00000010: 06320804  MUL R3, R2, R0 <loop_start>
+```
+
+**hexdump format with headers:**
+```
+Address    Hex Bytes            ASCII    Disassembly
+--------------------------------------------------------
+00000000  00 00 00 1d  |....|  HALT <main>
+00000004  10 00 04 00  |....|  MOV R0, #1024
+00000008  10 10 00 0a  |....|  MOV R1, #10
+0000000c  10 20 00 00  |. ..|  MOV R2, #0
+00000010  06 32 08 04  |.2..|  MUL R3, R2, R0 <loop_start>
+```
+
+**Symbol table output:**
+```
+=== Symbol Table ===
+Name                 Type       Address    Value      String
+------------------------------------------------------------
+main                 LABEL      0x00000000 0x00000000 
+loop_start           LABEL      0x00000010 0x00000000 
+loop_end             LABEL      0x00000020 0x00000000 
+ARRAY_SIZE           CONSTANT   0x0000000A 0x0000000A 
+msg_hello            STRING     0x00000100 0x00000000 Hello, World!
 ```
 
 ### VM (`dez_vm`)
@@ -258,6 +349,45 @@ ctest --output-on-failure
 ./bin/test_strings   # String handling
 ```
 
+## Disassembler Quick Reference
+
+### Command Line Options
+```bash
+./bin/disasm_tool [OPTIONS] <file.bin|instruction...>
+
+Options:
+  -f, --format FORMAT    Output format: simple, detailed, assembly, hex, objdump, hexdump
+  -s, --start ADDR       Start address (hex, default: 0)
+  -c, --count NUM        Number of instructions to disassemble
+  -a, --addresses        Show addresses in output
+  -l, --line-numbers     Show line numbers
+  -H, --headers          Show column headers
+  -S, --symbols          Show symbol information
+  --symbol-file FILE     Load symbol table from file
+  -h, --help             Show this help message
+```
+
+### Common Usage Patterns
+```bash
+# Basic disassembly
+./bin/disasm_tool program.bin
+
+# Professional output with headers and symbols
+./bin/disasm_tool -f objdump -H -S program.bin
+
+# Hex dump format for binary analysis
+./bin/disasm_tool -f hexdump -H program.bin
+
+# Detailed analysis with instruction breakdown
+./bin/disasm_tool -f detailed -H program.bin
+
+# Show only symbol table
+./bin/disasm_tool -S
+
+# Disassemble specific address range
+./bin/disasm_tool -s 0x100 -c 20 program.bin
+```
+
 ## File Format
 
 The binary format consists of:
@@ -269,6 +399,25 @@ The binary format consists of:
 3. **String Data**: Raw string data (null-terminated, word-aligned)
 
 ## Advanced Features
+
+### Enhanced Disassembler
+The disassembler provides professional-grade output similar to standard Unix tools:
+
+#### Multiple Output Formats
+- **objdump format**: Clean three-column layout with address, hex instruction, and disassembly
+- **hexdump format**: Shows address, individual hex bytes, ASCII representation, and disassembly
+- **detailed format**: Includes instruction breakdown with opcode analysis
+- **simple format**: Basic disassembly output
+
+#### Column Headers and Line Numbers
+- **Dynamic headers**: Automatically adjust based on format and options
+- **Line numbers**: Optional line numbering for better readability
+- **Clear column descriptions**: Headers explain what each column represents
+
+#### Symbol Table Integration
+- **Address-to-symbol mapping**: Shows symbol names in disassembly (e.g., `<main>`, `<loop_start>`)
+- **Symbol table display**: Complete symbol table with names, types, addresses, and values
+- **Symbol file support**: Load symbol tables from external files (placeholder for future implementation)
 
 ### Two-Pass Assembly
 The assembler uses a two-pass approach for proper label resolution:
@@ -300,7 +449,7 @@ src/
 │   └── asm.c              # Assembler command-line tool
 ├── main.c                  # VM command-line interface
 └── tools/
-    └── disasm_tool.c       # Disassembler command-line tool
+    └── disasm_tool.c       # Enhanced disassembler with multiple formats and symbol support
 
 tests/
 ├── asm/                    # Assembly test files

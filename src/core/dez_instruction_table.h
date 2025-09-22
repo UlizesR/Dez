@@ -58,6 +58,10 @@ void execute_shl(dez_vm_t *vm, uint32_t instruction);
 void execute_shr(dez_vm_t *vm, uint32_t instruction);
 void execute_inc(dez_vm_t *vm, uint32_t instruction);
 void execute_dec(dez_vm_t *vm, uint32_t instruction);
+void execute_load_indirect(dez_vm_t *vm, uint32_t instruction);
+void execute_store_indirect(dez_vm_t *vm, uint32_t instruction);
+void execute_load_indexed(dez_vm_t *vm, uint32_t instruction);
+void execute_store_indexed(dez_vm_t *vm, uint32_t instruction);
 void execute_unknown(dez_vm_t *vm, uint32_t instruction);
 
 // ============================================================================

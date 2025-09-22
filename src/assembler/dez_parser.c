@@ -4,8 +4,7 @@
 #include <string.h>
 
 // Initialize parser
-void parser_init(parser_t *parser, const char *input,
-                 symbol_table_t *symbol_table, uint32_t *output, int capacity) {
+void parser_init(parser_t *parser, const char *input, symbol_table_t *symbol_table, uint32_t *output, int capacity) {
   lexer_init(&parser->lexer, input);
   parser->symbol_table = symbol_table;
   parser->output = output;
@@ -77,15 +76,13 @@ bool parser_parse_line_with_labels(parser_t *parser) {
 
     // Find the end of current line (before any comment)
     int line_end = pos;
-    while (input[line_end] != '\0' && input[line_end] != '\n' &&
-           input[line_end] != ';') {
+    while (input[line_end] != '\0' && input[line_end] != '\n' && input[line_end] != ';') {
       line_end++;
     }
 
     // Skip whitespace before checking for ':'
     int colon_pos = line_end - 1;
-    while (colon_pos >= line_start &&
-           (input[colon_pos] == ' ' || input[colon_pos] == '\t')) {
+    while (colon_pos >= line_start && (input[colon_pos] == ' ' || input[colon_pos] == '\t')) {
       colon_pos--;
     }
 
@@ -94,12 +91,10 @@ bool parser_parse_line_with_labels(parser_t *parser) {
       // This is a label definition
       if (parser->pass == 1) {
         // Define label
-        symbol_table_define(parser->symbol_table, token.value,
-                            parser->current_address, token.line);
+        symbol_table_define(parser->symbol_table, token.value, parser->current_address, token.line);
       }
       // Skip the rest of the line
-      while (parser_current_token(parser).type != TOKEN_NEWLINE &&
-             parser_current_token(parser).type != TOKEN_EOF) {
+      while (parser_current_token(parser).type != TOKEN_NEWLINE && parser_current_token(parser).type != TOKEN_EOF) {
         parser_advance(parser);
       }
       return true;
@@ -191,8 +186,7 @@ bool parser_parse_label(parser_t *parser) {
 
   if (parser->pass == 1) {
     // Define label
-    symbol_table_define(parser->symbol_table, name_token.value,
-                        parser->current_address, name_token.line);
+    symbol_table_define(parser->symbol_table, name_token.value, parser->current_address, name_token.line);
   }
 
   return true;
@@ -203,8 +197,7 @@ bool parser_parse_constant(parser_t *parser) {
   token_t name_token = parser_current_token(parser);
   parser_advance(parser); // Consume identifier
 
-  if (!parser_consume_token(parser, TOKEN_IDENTIFIER) ||
-      strcmp(parser_current_token(parser).value, "EQU") != 0) {
+  if (!parser_consume_token(parser, TOKEN_IDENTIFIER) || strcmp(parser_current_token(parser).value, "EQU") != 0) {
     parser_expected(parser, "EQU");
     return false;
   }
@@ -322,6 +315,18 @@ bool parser_parse_instruction(parser_t *parser, parsed_instruction_t *inst) {
   } else if (strcmp(token.value, "DEC") == 0) {
     inst->type = DEZ_INST_DEC;
     inst->num_operands = 1;
+  } else if (strcmp(token.value, "LOAD_INDIRECT") == 0) {
+    inst->type = DEZ_INST_LOAD_INDIRECT;
+    inst->num_operands = 2;
+  } else if (strcmp(token.value, "STORE_INDIRECT") == 0) {
+    inst->type = DEZ_INST_STORE_INDIRECT;
+    inst->num_operands = 2;
+  } else if (strcmp(token.value, "LOAD_INDEXED") == 0) {
+    inst->type = DEZ_INST_LOAD_INDEXED;
+    inst->num_operands = 3;
+  } else if (strcmp(token.value, "STORE_INDEXED") == 0) {
+    inst->type = DEZ_INST_STORE_INDEXED;
+    inst->num_operands = 3;
   } else if (strcmp(token.value, "NOP") == 0) {
     inst->type = DEZ_INST_NOP;
     inst->num_operands = 0;
@@ -469,18 +474,15 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst) {
     if (inst->operands[1].type == DEZ_OP_STRING) {
       // Handle string literal - load address of string
       char symbol_name[64];
-      snprintf(symbol_name, sizeof(symbol_name), "__str_%s",
-               inst->operands[1].string);
-      symbol_table_define_string(inst->symbol_table, symbol_name,
-                                 inst->operands[1].string, 0);
+      snprintf(symbol_name, sizeof(symbol_name), "__str_%s", inst->operands[1].string);
+      symbol_table_define_string(inst->symbol_table, symbol_name, inst->operands[1].string, 0);
       // Find the symbol to get its address
       symbol_t *sym = symbol_table_find(inst->symbol_table, symbol_name);
       uint32_t string_addr = sym ? sym->address : 0;
       return parser_encode_mov(inst->operands[0].reg, string_addr);
     } else if (inst->operands[1].type == DEZ_OP_LABEL) {
       // Resolve label to address
-      symbol_t *sym =
-          symbol_table_find(inst->symbol_table, inst->operands[1].label);
+      symbol_t *sym = symbol_table_find(inst->symbol_table, inst->operands[1].label);
       uint32_t label_addr = sym ? sym->address : 0;
       return parser_encode_mov(inst->operands[0].reg, label_addr);
     } else {
@@ -489,17 +491,22 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst) {
   case DEZ_INST_LOAD:
     if (inst->operands[1].type == DEZ_OP_LABEL) {
       // Resolve label to address
-      symbol_t *sym =
-          symbol_table_find(inst->symbol_table, inst->operands[1].label);
+      symbol_t *sym = symbol_table_find(inst->symbol_table, inst->operands[1].label);
       uint32_t label_addr = sym ? sym->address : 0;
       return parser_encode_load(inst->operands[0].reg, label_addr);
     } else {
-      return parser_encode_load(inst->operands[0].reg,
-                                inst->operands[1].address);
+      return parser_encode_load(inst->operands[0].reg, inst->operands[1].address);
     }
   case DEZ_INST_STORE:
-    return parser_encode_store(inst->operands[0].reg,
-                               inst->operands[1].address);
+    return parser_encode_store(inst->operands[0].reg, inst->operands[1].address);
+  case DEZ_INST_LOAD_INDIRECT:
+    return parser_encode_load_indirect(inst->operands[0].reg, inst->operands[1].reg);
+  case DEZ_INST_STORE_INDIRECT:
+    return parser_encode_store_indirect(inst->operands[0].reg, inst->operands[1].reg);
+  case DEZ_INST_LOAD_INDEXED:
+    return parser_encode_load_indexed(inst->operands[0].reg, inst->operands[1].reg, inst->operands[2].reg);
+  case DEZ_INST_STORE_INDEXED:
+    return parser_encode_store_indexed(inst->operands[0].reg, inst->operands[1].reg, inst->operands[2].reg);
   case DEZ_INST_ADD:
   case DEZ_INST_SUB:
   case DEZ_INST_MUL:
@@ -508,20 +515,15 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst) {
     if (inst->operands[2].type == DEZ_OP_IMMEDIATE) {
       // Encode as (opcode << 24) | (reg1 << 20) | (reg2 << 16) | (1 << 11) |
       // immediate Use bit 11 as a flag to indicate immediate mode
-      return (inst->type << 24) | (inst->operands[0].reg << 20) |
-             (inst->operands[1].reg << 16) | (1 << 11) |
-             (inst->operands[2].value & 0x07FF);
+      return (inst->type << 24) | (inst->operands[0].reg << 20) | (inst->operands[1].reg << 16) | (1 << 11) | (inst->operands[2].value & 0x07FF);
     } else {
       // Register-to-register operation
-      return parser_encode_arithmetic(inst->type, inst->operands[0].reg,
-                                      inst->operands[1].reg,
-                                      inst->operands[2].reg);
+      return parser_encode_arithmetic(inst->type, inst->operands[0].reg, inst->operands[1].reg, inst->operands[2].reg);
     }
   case DEZ_INST_JMP:
     if (inst->operands[0].type == DEZ_OP_LABEL) {
       // Resolve label to address
-      symbol_t *sym =
-          symbol_table_find(inst->symbol_table, inst->operands[0].label);
+      symbol_t *sym = symbol_table_find(inst->symbol_table, inst->operands[0].label);
       uint32_t label_addr = sym ? sym->address : 0;
       return parser_encode_jump(inst->type, 0, label_addr);
     } else {
@@ -535,8 +537,7 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst) {
   case DEZ_INST_JGE:
     if (inst->operands[0].type == DEZ_OP_LABEL) {
       // Resolve label to address
-      symbol_t *sym =
-          symbol_table_find(inst->symbol_table, inst->operands[0].label);
+      symbol_t *sym = symbol_table_find(inst->symbol_table, inst->operands[0].label);
       uint32_t label_addr = sym ? sym->address : 0;
       return parser_encode_jump(inst->type, 0, label_addr);
     } else {
@@ -546,11 +547,9 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst) {
     if (inst->operands[1].type == DEZ_OP_IMMEDIATE) {
       // CMP with immediate value - encode as (opcode << 24) | (reg << 20) |
       // immediate
-      return (DEZ_INST_CMP << 24) | (inst->operands[0].reg << 20) |
-             (inst->operands[1].value & 0x0FFF);
+      return (DEZ_INST_CMP << 24) | (inst->operands[0].reg << 20) | (inst->operands[1].value & 0x0FFF);
     } else {
-      return parser_encode_arithmetic(inst->type, inst->operands[0].reg,
-                                      inst->operands[1].reg, 0);
+      return parser_encode_arithmetic(inst->type, inst->operands[0].reg, inst->operands[1].reg, 0);
     }
   case DEZ_INST_SYS:
     return parser_encode_sys(inst->operands[0].reg, inst->operands[1].value);
@@ -562,17 +561,13 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst) {
   case DEZ_INST_XOR:
   case DEZ_INST_SHL:
   case DEZ_INST_SHR:
-    return parser_encode_arithmetic(inst->type, inst->operands[0].reg,
-                                    inst->operands[1].reg,
-                                    inst->operands[2].reg);
+    return parser_encode_arithmetic(inst->type, inst->operands[0].reg, inst->operands[1].reg, inst->operands[2].reg);
   case DEZ_INST_NOT:
-    return parser_encode_arithmetic(inst->type, inst->operands[0].reg,
-                                    inst->operands[1].reg, 0);
+    return parser_encode_arithmetic(inst->type, inst->operands[0].reg, inst->operands[1].reg, 0);
   case DEZ_INST_CALL:
     if (inst->operands[0].type == DEZ_OP_LABEL) {
       // Resolve label to address
-      symbol_t *sym =
-          symbol_table_find(inst->symbol_table, inst->operands[0].label);
+      symbol_t *sym = symbol_table_find(inst->symbol_table, inst->operands[0].label);
       uint32_t label_addr = sym ? sym->address : 0;
       return parser_encode_jump(inst->type, 0, label_addr);
     } else {
@@ -605,15 +600,33 @@ uint32_t parser_encode_store(uint8_t reg, uint32_t address) {
   return (DEZ_INST_STORE << 24) | (reg << 20) | (address & 0x0FFF);
 }
 
+// Encode LOAD_INDIRECT instruction
+uint32_t parser_encode_load_indirect(uint8_t dest_reg, uint8_t addr_reg) {
+  return (DEZ_INST_LOAD_INDIRECT << 24) | (dest_reg << 20) | (addr_reg << 16);
+}
+
+// Encode STORE_INDIRECT instruction
+uint32_t parser_encode_store_indirect(uint8_t src_reg, uint8_t addr_reg) {
+  return (DEZ_INST_STORE_INDIRECT << 24) | (src_reg << 20) | (addr_reg << 16);
+}
+
+// Encode LOAD_INDEXED instruction
+uint32_t parser_encode_load_indexed(uint8_t dest_reg, uint8_t base_reg, uint8_t index_reg) {
+  return (DEZ_INST_LOAD_INDEXED << 24) | (dest_reg << 20) | (base_reg << 16) | (index_reg << 12);
+}
+
+// Encode STORE_INDEXED instruction
+uint32_t parser_encode_store_indexed(uint8_t src_reg, uint8_t base_reg, uint8_t index_reg) {
+  return (DEZ_INST_STORE_INDEXED << 24) | (src_reg << 20) | (base_reg << 16) | (index_reg << 12);
+}
+
 // Encode arithmetic instruction
-uint32_t parser_encode_arithmetic(dez_instruction_type_t type, uint8_t reg1,
-                                  uint8_t reg2, uint8_t reg3) {
+uint32_t parser_encode_arithmetic(dez_instruction_type_t type, uint8_t reg1, uint8_t reg2, uint8_t reg3) {
   return (type << 24) | (reg1 << 20) | (reg2 << 16) | (reg3 << 12);
 }
 
 // Encode jump instruction
-uint32_t parser_encode_jump(dez_instruction_type_t type, uint8_t reg,
-                            uint32_t address) {
+uint32_t parser_encode_jump(dez_instruction_type_t type, uint8_t reg, uint32_t address) {
   return (type << 24) | (reg << 20) | (address & 0x0FFF);
 }
 
@@ -628,22 +641,18 @@ uint32_t parser_encode_single(dez_instruction_type_t type) {
 }
 
 // Encode single register instruction
-uint32_t parser_encode_single_register(dez_instruction_type_t type,
-                                       uint8_t reg) {
+uint32_t parser_encode_single_register(dez_instruction_type_t type, uint8_t reg) {
   return (type << 24) | (reg << 20);
 }
 
 // Error handling
 void parser_error(parser_t *parser, const char *message) {
-  printf("Error at line %d, column %d: %s\n", parser_current_token(parser).line,
-         parser_current_token(parser).column, message);
+  printf("Error at line %d, column %d: %s\n", parser_current_token(parser).line, parser_current_token(parser).column, message);
   parser->error = true;
 }
 
 void parser_expected(parser_t *parser, const char *expected) {
-  printf("Error at line %d, column %d: Expected %s, got %s\n",
-         parser_current_token(parser).line, parser_current_token(parser).column,
-         expected, token_type_to_string(parser_current_token(parser).type));
+  printf("Error at line %d, column %d: Expected %s, got %s\n", parser_current_token(parser).line, parser_current_token(parser).column, expected, token_type_to_string(parser_current_token(parser).type));
   parser->error = true;
 }
 

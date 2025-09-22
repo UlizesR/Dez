@@ -118,6 +118,10 @@ typedef enum {
   DEZ_INST_SHR = 0x18,   // shift right instruction
   DEZ_INST_INC = 0x1D,   // increment instruction
   DEZ_INST_DEC = 0x1E,   // decrement instruction
+  DEZ_INST_LOAD_INDIRECT = 0x1F,  // load from address in register
+  DEZ_INST_STORE_INDIRECT = 0x20, // store to address in register
+  DEZ_INST_LOAD_INDEXED = 0x21,   // load from base + index
+  DEZ_INST_STORE_INDEXED = 0x22,  // store to base + index
   DEZ_INST_HALT = 0x00,  // halt instruction
   DEZ_INST_NOP = 0x12,   // no operation
   DEZ_INST_UNKNOWN = 0xFF

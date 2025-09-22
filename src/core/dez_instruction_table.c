@@ -489,6 +489,98 @@ void execute_dec(dez_vm_t *vm, uint32_t instruction) {
 }
 
 /**
+ * @brief Execute LOAD_INDIRECT instruction: Load value from memory address stored in register
+ *
+ * Format: (DEZ_INST_LOAD_INDIRECT << 24) | (dest_reg << 20) | (addr_reg << 16)
+ * Example: LOAD_INDIRECT R0, R1 -> R0 = memory[R1]
+ *
+ * @param vm Pointer to VM instance
+ * @param instruction 32-bit instruction word
+ */
+void execute_load_indirect(dez_vm_t *vm, uint32_t instruction) {
+  uint8_t dest_reg = DEZ_DECODE_REG1(instruction);
+  uint8_t addr_reg = DEZ_DECODE_REG2(instruction);
+
+  DEZ_VALIDATE_REGISTER(dest_reg, "LOAD_INDIRECT");
+  DEZ_VALIDATE_REGISTER(addr_reg, "LOAD_INDIRECT");
+
+  uint32_t address = vm->cpu.regs[addr_reg];
+  DEZ_VALIDATE_MEMORY_ADDRESS(address, "LOAD_INDIRECT");
+
+  vm->cpu.regs[dest_reg] = memory_read_word(&vm->memory, address);
+}
+
+/**
+ * @brief Execute STORE_INDIRECT instruction: Store register value to memory address stored in register
+ *
+ * Format: (DEZ_INST_STORE_INDIRECT << 24) | (src_reg << 20) | (addr_reg << 16)
+ * Example: STORE_INDIRECT R0, R1 -> memory[R1] = R0
+ *
+ * @param vm Pointer to VM instance
+ * @param instruction 32-bit instruction word
+ */
+void execute_store_indirect(dez_vm_t *vm, uint32_t instruction) {
+  uint8_t src_reg = DEZ_DECODE_REG1(instruction);
+  uint8_t addr_reg = DEZ_DECODE_REG2(instruction);
+
+  DEZ_VALIDATE_REGISTER(src_reg, "STORE_INDIRECT");
+  DEZ_VALIDATE_REGISTER(addr_reg, "STORE_INDIRECT");
+
+  uint32_t address = vm->cpu.regs[addr_reg];
+  DEZ_VALIDATE_MEMORY_ADDRESS(address, "STORE_INDIRECT");
+
+  memory_write_word(&vm->memory, address, vm->cpu.regs[src_reg]);
+}
+
+/**
+ * @brief Execute LOAD_INDEXED instruction: Load value from memory at base + index address
+ *
+ * Format: (DEZ_INST_LOAD_INDEXED << 24) | (dest_reg << 20) | (base_reg << 16) | (index_reg << 12)
+ * Example: LOAD_INDEXED R0, R1, R2 -> R0 = memory[R1 + R2]
+ *
+ * @param vm Pointer to VM instance
+ * @param instruction 32-bit instruction word
+ */
+void execute_load_indexed(dez_vm_t *vm, uint32_t instruction) {
+  uint8_t dest_reg = DEZ_DECODE_REG1(instruction);
+  uint8_t base_reg = DEZ_DECODE_REG2(instruction);
+  uint8_t index_reg = DEZ_DECODE_REG3(instruction);
+
+  DEZ_VALIDATE_REGISTER(dest_reg, "LOAD_INDEXED");
+  DEZ_VALIDATE_REGISTER(base_reg, "LOAD_INDEXED");
+  DEZ_VALIDATE_REGISTER(index_reg, "LOAD_INDEXED");
+
+  uint32_t address = vm->cpu.regs[base_reg] + vm->cpu.regs[index_reg];
+  DEZ_VALIDATE_MEMORY_ADDRESS(address, "LOAD_INDEXED");
+
+  vm->cpu.regs[dest_reg] = memory_read_word(&vm->memory, address);
+}
+
+/**
+ * @brief Execute STORE_INDEXED instruction: Store register value to memory at base + index address
+ *
+ * Format: (DEZ_INST_STORE_INDEXED << 24) | (src_reg << 20) | (base_reg << 16) | (index_reg << 12)
+ * Example: STORE_INDEXED R0, R1, R2 -> memory[R1 + R2] = R0
+ *
+ * @param vm Pointer to VM instance
+ * @param instruction 32-bit instruction word
+ */
+void execute_store_indexed(dez_vm_t *vm, uint32_t instruction) {
+  uint8_t src_reg = DEZ_DECODE_REG1(instruction);
+  uint8_t base_reg = DEZ_DECODE_REG2(instruction);
+  uint8_t index_reg = DEZ_DECODE_REG3(instruction);
+
+  DEZ_VALIDATE_REGISTER(src_reg, "STORE_INDEXED");
+  DEZ_VALIDATE_REGISTER(base_reg, "STORE_INDEXED");
+  DEZ_VALIDATE_REGISTER(index_reg, "STORE_INDEXED");
+
+  uint32_t address = vm->cpu.regs[base_reg] + vm->cpu.regs[index_reg];
+  DEZ_VALIDATE_MEMORY_ADDRESS(address, "STORE_INDEXED");
+
+  memory_write_word(&vm->memory, address, vm->cpu.regs[src_reg]);
+}
+
+/**
  * Execute PUSH instruction: Push register value to stack
  * Format: (INST_PUSH << 24) | (reg << 20)
  * Example: PUSH R0 -> Push R0 to stack
@@ -659,6 +751,10 @@ static const instruction_info_t instruction_table[256] = {
     [DEZ_INST_SHR] = {execute_shr, 1, false, false, "SHR"},
     [DEZ_INST_INC] = {execute_inc, 1, false, false, "INC"},
     [DEZ_INST_DEC] = {execute_dec, 1, false, false, "DEC"},
+    [DEZ_INST_LOAD_INDIRECT] = {execute_load_indirect, 1, false, false, "LOAD_INDIRECT"},
+    [DEZ_INST_STORE_INDIRECT] = {execute_store_indirect, 1, false, false, "STORE_INDIRECT"},
+    [DEZ_INST_LOAD_INDEXED] = {execute_load_indexed, 1, false, false, "LOAD_INDEXED"},
+    [DEZ_INST_STORE_INDEXED] = {execute_store_indexed, 1, false, false, "STORE_INDEXED"},
     [DEZ_INST_CALL] = {execute_call, 0, false, false, "CALL"},
     [DEZ_INST_RET] = {execute_ret, 0, false, false, "RET"},
     [DEZ_INST_HALT] = {execute_halt, 0, false, false, "HALT"},

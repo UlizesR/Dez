@@ -30,8 +30,7 @@ typedef struct {
 } parsed_instruction_t;
 
 // Parser functions
-void parser_init(parser_t *parser, const char *input,
-                 symbol_table_t *symbol_table, uint32_t *output, int capacity);
+void parser_init(parser_t *parser, const char *input, symbol_table_t *symbol_table, uint32_t *output, int capacity);
 bool parser_parse(parser_t *parser);
 bool parser_parse_line(parser_t *parser);
 bool parser_parse_line_with_labels(parser_t *parser);
@@ -45,21 +44,20 @@ uint32_t parser_encode_instruction(const parsed_instruction_t *inst);
 uint32_t parser_encode_mov(uint8_t reg, uint32_t immediate);
 uint32_t parser_encode_load(uint8_t reg, uint32_t address);
 uint32_t parser_encode_store(uint8_t reg, uint32_t address);
-uint32_t parser_encode_arithmetic(dez_instruction_type_t type, uint8_t reg1,
-                                  uint8_t reg2, uint8_t reg3);
-uint32_t parser_encode_jump(dez_instruction_type_t type, uint8_t reg,
-                            uint32_t address);
+uint32_t parser_encode_load_indirect(uint8_t dest_reg, uint8_t addr_reg);
+uint32_t parser_encode_store_indirect(uint8_t src_reg, uint8_t addr_reg);
+uint32_t parser_encode_load_indexed(uint8_t dest_reg, uint8_t base_reg, uint8_t index_reg);
+uint32_t parser_encode_store_indexed(uint8_t src_reg, uint8_t base_reg, uint8_t index_reg);
+uint32_t parser_encode_arithmetic(dez_instruction_type_t type, uint8_t reg1, uint8_t reg2, uint8_t reg3);
+uint32_t parser_encode_jump(dez_instruction_type_t type, uint8_t reg, uint32_t address);
 uint32_t parser_encode_sys(uint8_t reg, uint32_t syscall);
 uint32_t parser_encode_single(dez_instruction_type_t type);
-uint32_t parser_encode_single_register(dez_instruction_type_t type,
-                                       uint8_t reg);
+uint32_t parser_encode_single_register(dez_instruction_type_t type, uint8_t reg);
 
 // Operand resolution
 bool parser_resolve_operand(parser_t *parser, dez_operand_t *operand);
-bool parser_resolve_label(parser_t *parser, const char *label,
-                          uint32_t *address);
-bool parser_resolve_constant(parser_t *parser, const char *name,
-                             uint32_t *value);
+bool parser_resolve_label(parser_t *parser, const char *label, uint32_t *address);
+bool parser_resolve_constant(parser_t *parser, const char *name, uint32_t *value);
 
 // Error handling
 void parser_error(parser_t *parser, const char *message);

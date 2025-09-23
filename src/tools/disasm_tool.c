@@ -370,11 +370,14 @@ static symbol_table_t* parse_assembly_file(const char *asm_filename) {
     
     // Check for label definition
     char label_name[MAX_LABEL_LENGTH];
-    if (extract_label_from_line(line, label_name, sizeof(label_name))) {
+    bool is_label_only = extract_label_from_line(line, label_name, sizeof(label_name));
+    if (is_label_only) {
       symbol_table_define(&table, label_name, address, line_num);
+      // Labels do not consume instruction space
+      continue;
     }
     
-    // Increment address for each instruction line
+    // Increment address for instruction lines only
     address += INSTRUCTION_SIZE;
   }
   
